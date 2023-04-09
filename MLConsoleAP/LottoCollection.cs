@@ -45,32 +45,22 @@ namespace MLConsoleAP
         {
             var mlContext = new MLContext();
             IDataView dataView = mlContext.Data.LoadFromTextFile<LotteryData>("lotto.txt", separatorChar: ',', hasHeader: true);
-
             List<int[]> numbers = new List<int[]>();
-            //List<LotteryData> lotteryDatas = new List<LotteryData>();
-            //List<int> specialNumbers = new List<int>();
 
             foreach (var row in mlContext.Data.CreateEnumerable<LotteryData>(dataView, reuseRowObject: true))
             {
                 var numberArray = new int[] { (int)row.Number1, (int)row.Number2, (int)row.Number3, (int)row.Number4, (int)row.Number5, (int)row.Number6 };
                 numbers.Add(numberArray);
-                //specialNumbers.Add((int)row.SpecialNumber);
-                //lotteryDatas.Add(row);
             }
 
-            //var data = mlContext.Data.LoadFromEnumerable(numbers.Select(x => new { Numbers = x }));
-            //var data = mlContext.Data.LoadFromEnumerable(lotteryDatas);
             //var trainTestData = mlContext.Data.TrainTestSplit(data, testFraction: 0.2);
             var trainTestData = mlContext.Data.TrainTestSplit(dataView, testFraction: 0.2);
 
             var pipeline = mlContext.Transforms.Conversion
                                     .MapValueToKey(outputColumnName: "LabelAsKey", inputColumnName: "Label")
-                                    //.MapValueToKey("Label", keyData: lotteryDatas.ToArray())
                                     .Append(mlContext.Transforms.Concatenate("Features", nameof(LotteryData.Number1), nameof(LotteryData.Number2), nameof(LotteryData.Number3), nameof(LotteryData.Number4), nameof(LotteryData.Number5), nameof(LotteryData.Number6)))
                                     .Append(mlContext.Transforms.NormalizeMinMax("Features"))
-                                    //.Append(mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"))
                                     .Append(mlContext.Regression.Trainers.Sdca());
-                                    //.Append(mlContext.Regression.Trainers.FastTree());
 
             //var model = pipeline.Fit(trainTestData.TrainSet);
             var model = pipeline.Fit(dataView);
